@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestión de Solicitudes</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #1E3A5F; --navy-light: #2C5282; --accent: #3B82F6;
+    --pending: #D97706; --pending-bg: #FEF3C7;
+    --process: #2563EB; --process-bg: #DBEAFE;
+    --done: #16A34A; --done-bg: #DCFCE7;
+    --bg: #F0F4F8; --surface: #FFFFFF; --border: #E2E8F0;
+    --text: #1A202C; --muted: #718096;
+  }
+  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: white; padding: 0 2rem; height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 100;
+  }
+  header h1 { font-size: 1.2rem; font-weight: 600; }
+  .header-right { display: flex; align-items: center; gap: 1rem; }
+  #sync-status { font-size: 0.78rem; opacity: 0.85; }
+  #clock { font-size: 0.78rem; opacity: 0.7; }
+
+  /* Config banner */
+  #config-banner {
+    background: #FEF3C7; border-bottom: 2px solid #F59E0B;
+    padding: 0.8rem 2rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  }
+  #config-banner p { font-size: 0.88rem; color: #92400E; flex: 1; }
+  #config-banner input {
+    flex: 2; min-width: 260px; padding: 0.5rem 0.8rem;
+    border: 1.5px solid #F59E0B; border-radius: 7px;
+    font-size: 0.85rem; font-family: inherit; outline: none;
+  }
+  .btn-config { padding: 0.5rem 1rem; background: #D97706; color: white; border: none; border-radius: 7px; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
+  .btn-config:hover { background: #B45309; }
+
+  .tabs { display: flex; padding: 1.5rem 2rem 0; border-bottom: 2px solid var(--border); }
+  .tab-btn {
+    padding: 0.6rem 1.4rem; border: none; background: none;
+    font-size: 0.9rem; font-weight: 500; color: var(--muted); cursor: pointer;
+    border-bottom: 3px solid transparent; margin-bottom: -2px;
+    transition: all 0.2s; font-family: inherit;
+  }
+  .tab-btn:hover { color: var(--navy); }
+  .tab-btn.active { color: var(--navy); border-bottom-color: var(--accent); }
+  .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--accent); color: white; border-radius: 999px;
+    font-size: 0.7rem; font-weight: 700; min-width: 18px; height: 18px;
+    padding: 0 5px; margin-left: 6px;
+  }
+  .tab-btn:not(.active) .badge { background: #CBD5E0; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem 2rem 3rem; }
+
+  .stats { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .stat {
+    background: white; border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 0.75rem 1.2rem;
+    flex: 1; min-width: 110px; text-align: center;
+  }
+  .stat .num { font-size: 1.6rem; font-weight: 700; }
+  .stat .lbl { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+  .stat.s-p .num { color: var(--pending); }
+  .stat.s-e .num { color: var(--process); }
+
+  .toolbar {
+    display: flex; gap: 1rem; margin-bottom: 1.5rem;
+    flex-wrap: wrap; align-items: center; justify-content: space-between;
+  }
+  .search-box { position: relative; flex: 1; min-width: 200px; max-width: 340px; }
+  .search-box input {
+    width: 100%; padding: 0.55rem 0.9rem 0.55rem 2.4rem;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: 0.88rem; font-family: inherit; background: white; outline: none; transition: border 0.2s;
+  }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-icon { position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); color: var(--muted); }
+
+  .btn {
+    padding: 0.55rem 1.1rem; border-radius: 8px; border: none;
+    font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: all 0.15s;
+    display: inline-flex; align-items: center; gap: 0.4rem;
+  }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover:not(:disabled) { background: #2563EB; }
+  .btn-danger { background: #FEE2E2; color: #DC2626; }
+  .btn-danger:hover { background: #FECACA; }
+  .btn-ghost { background: none; border: 1.5px solid var(--border); color: var(--text); }
+  .btn-ghost:hover { background: var(--bg); }
+  .btn-sm { padding: 0.35rem 0.7rem; font-size: 0.78rem; }
+  .btn-refresh { background: #EBF8FF; color: #2B6CB0; border: 1.5px solid #BEE3F8; }
+  .btn-refresh:hover { background: #BEE3F8; }
+
+  .cards { display: flex; flex-direction: column; gap: 0.9rem; }
+  .card {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 1.1rem 1.3rem;
+    display: flex; gap: 1.2rem; align-items: flex-start;
+    transition: box-shadow 0.2s, border-color 0.2s;
+  }
+  .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); border-color: #CBD5E0; }
+  .card-id { font-size: 0.72rem; color: var(--muted); font-weight: 600; min-width: 44px; padding-top: 2px; }
+  .card-body { flex: 1; }
+  .card-top { display: flex; align-items: center; gap: 0.7rem; margin-bottom: 0.3rem; flex-wrap: wrap; }
+  .client-code { font-size: 0.75rem; font-weight: 600; color: var(--navy); background: #EBF4FF; padding: 0.15rem 0.5rem; border-radius: 4px; }
+  .client-name { font-weight: 600; font-size: 0.97rem; }
+  .detail { font-size: 0.87rem; color: #4A5568; margin-bottom: 0.6rem; line-height: 1.5; }
+  .card-meta { font-size: 0.75rem; color: var(--muted); }
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.25rem 0.65rem; border-radius: 6px;
+    font-size: 0.78rem; font-weight: 600;
+  }
+  .s-Pendiente { background: var(--pending-bg); color: var(--pending); }
+  .s-EnProceso { background: var(--process-bg); color: var(--process); }
+  .s-Concluido { background: var(--done-bg); color: var(--done); }
+  .card-actions { display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-end; min-width: 140px; }
+  .status-select {
+    width: 100%; padding: 0.4rem 0.6rem;
+    border: 1.5px solid var(--border); border-radius: 7px;
+    font-size: 0.82rem; font-family: inherit; cursor: pointer; background: white; outline: none;
+  }
+  .status-select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .loading-row {
+    text-align: center; padding: 2.5rem 1rem; color: var(--muted);
+  }
+  .spinner {
+    width: 32px; height: 32px; border: 3px solid #E2E8F0;
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 0.7s linear infinite; margin: 0 auto 0.8rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+  .empty .icon { font-size: 2.5rem; margin-bottom: 0.7rem; }
+
+  /* Toast */
+  #toast {
+    position: fixed; bottom: 1.5rem; right: 1.5rem;
+    background: #1A202C; color: white; padding: 0.7rem 1.2rem;
+    border-radius: 10px; font-size: 0.88rem; font-weight: 500;
+    opacity: 0; transition: opacity 0.3s; z-index: 999;
+    max-width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+  }
+  #toast.show { opacity: 1; }
+  #toast.success { border-left: 4px solid #16A34A; }
+  #toast.error { border-left: 4px solid #DC2626; }
+  #toast.info { border-left: 4px solid var(--accent); }
+
+  /* Modal */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: white; border-radius: 14px; padding: 1.8rem;
+    width: 100%; max-width: 500px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    transform: translateY(12px); transition: transform 0.2s;
+  }
+  .overlay.open .modal { transform: translateY(0); }
+  .modal h2 { font-size: 1.1rem; margin-bottom: 1.3rem; color: var(--navy); }
+  .field { margin-bottom: 1rem; }
+  .field label { display: block; font-size: 0.82rem; font-weight: 600; margin-bottom: 0.35rem; color: #4A5568; }
+  .field input, .field textarea, .field select {
+    width: 100%; padding: 0.6rem 0.8rem;
+    border: 1.5px solid var(--border); border-radius: 8px;
+    font-size: 0.9rem; font-family: inherit; outline: none; transition: border 0.2s; resize: vertical;
+  }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 0.7rem; margin-top: 1.5rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📋 Gestión de Solicitudes</h1>
+  <div class="header-right">
+    <span id="sync-status"></span>
+    <span id="clock"></span>
+  </div>
+</header>
+
+<!-- Banner de configuración -->
+<div id="config-banner">
+  <p>⚙️ <strong>Paso 1:</strong> Pega aquí la URL de tu Google Apps Script y guárdala:</p>
+  <input type="text" id="script-url-input" placeholder="https://script.google.com/macros/s/TU_ID_AQUI/exec">
+  <button class="btn-config" onclick="saveScriptUrl()">Guardar URL</button>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('activas')">
+    Solicitudes Activas <span class="badge" id="badge-activas">0</span>
+  </button>
+  <button class="tab-btn" onclick="switchTab('concluidas')">
+    Solicitudes Concluidas <span class="badge" id="badge-concluidas">0</span>
+  </button>
+</div>
+
+<div class="container">
+  <div id="tab-activas">
+    <div class="stats">
+      <div class="stat s-p"><div class="num" id="cnt-p">0</div><div class="lbl">Pendientes</div></div>
+      <div class="stat s-e"><div class="num" id="cnt-e">0</div><div class="lbl">En Proceso</div></div>
+      <div class="stat"><div class="num" id="cnt-t">0</div><div class="lbl">Total Activas</div></div>
+    </div>
+    <div class="toolbar">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search" placeholder="Buscar por cliente o detalle…" oninput="renderActivas()">
+      </div>
+      <select id="filter-status" onchange="renderActivas()" style="padding:0.55rem 0.8rem;border:1.5px solid #E2E8F0;border-radius:8px;font-family:inherit;font-size:0.88rem;background:white;cursor:pointer;outline:none;">
+        <option value="">Todos los estados</option>
+        <option value="Pendiente">Pendiente</option>
+        <option value="En Proceso">En Proceso</option>
+      </select>
+      <button class="btn btn-refresh" onclick="loadData()">🔄 Actualizar</button>
+      <button class="btn btn-primary" onclick="openModal()">+ Nueva Solicitud</button>
+    </div>
+    <div class="cards" id="cards-activas"><div class="loading-row"><div class="spinner"></div><p>Cargando solicitudes…</p></div></div>
+  </div>
+
+  <div id="tab-concluidas" style="display:none">
+    <div class="toolbar">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-c" placeholder="Buscar en concluidas…" oninput="renderConcluidas()">
+      </div>
+      <button class="btn btn-refresh" onclick="loadData()">🔄 Actualizar</button>
+    </div>
+    <div class="cards" id="cards-concluidas"></div>
+  </div>
+</div>
+
+<!-- Modal nueva solicitud -->
+<div class="overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <h2>📝 Nueva Solicitud</h2>
+    <div class="field"><label>Código Cliente</label><input type="text" id="f-code" placeholder="Ej: CLI-004"></div>
+    <div class="field"><label>Nombre Cliente</label><input type="text" id="f-name" placeholder="Nombre completo o empresa"></div>
+    <div class="field"><label>Detalle de la Solicitud</label><textarea id="f-detail" rows="4" placeholder="Describe la solicitud…"></textarea></div>
+    <div class="field">
+      <label>Estado Inicial</label>
+      <select id="f-status">
+        <option value="Pendiente">⏳ Pendiente</option>
+        <option value="En Proceso">🔄 En Proceso</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="btn-save" onclick="addRequest()">Guardar Solicitud</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────
+const SCRIPT_URL_KEY = 'gestion_script_url';
+let SCRIPT_URL = localStorage.getItem(SCRIPT_URL_KEY) || '';
+
+let activas = [];
+let concluidas = [];
+
+// ─── INIT ─────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  if (SCRIPT_URL) {
+    document.getElementById('script-url-input').value = SCRIPT_URL;
+    document.getElementById('config-banner').style.display = 'none';
+    loadData();
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+  setInterval(() => { if (SCRIPT_URL) loadData(true); }, 30000); // auto-refresh 30s
+});
+
+function saveScriptUrl() {
+  const url = document.getElementById('script-url-input').value.trim();
+  if (!url.startsWith('https://script.google.com')) {
+    toast('URL inválida. Debe empezar con https://script.google.com', 'error');
+    return;
+  }
+  SCRIPT_URL = url;
+  localStorage.setItem(SCRIPT_URL_KEY, SCRIPT_URL);
+  document.getElementById('config-banner').style.display = 'none';
+  toast('URL guardada. Cargando datos…', 'success');
+  loadData();
+}
+
+// ─── API CALLS ────────────────────────────────────────────
+async function api(params) {
+  if (!SCRIPT_URL) { toast('Configura la URL del script primero.', 'error'); return null; }
+  try {
+    setSyncStatus('⏳ Sincronizando…');
+    const url = SCRIPT_URL + '?' + new URLSearchParams(params).toString();
+    const res = await fetch(url);
+    const data = await res.json();
+    setSyncStatus('✅ Sincronizado');
+    return data;
+  } catch(e) {
+    setSyncStatus('❌ Error de conexión');
+    toast('No se pudo conectar con Google Sheets. Revisa la URL.', 'error');
+    return null;
+  }
+}
+
+async function loadData(silent = false) {
+  if (!SCRIPT_URL) return;
+  if (!silent) setLoading(true);
+  const data = await api({ action: 'getAll' });
+  if (!data) { setLoading(false); return; }
+  activas = data.activas || [];
+  concluidas = data.concluidas || [];
+  renderActivas();
+  renderConcluidas();
+  updateBadges();
+  if (!silent) setLoading(false);
+}
+
+async function changeStatus(rowId, newStatus) {
+  disableCard(rowId, true);
+  const data = await api({ action: 'updateStatus', rowId, newStatus });
+  if (data && data.ok) {
+    toast(newStatus === 'Concluido' ? '✅ Solicitud concluida y movida' : `🔄 Estado actualizado a "${newStatus}"`, 'success');
+    await loadData(true);
+  }
+  disableCard(rowId, false);
+}
+
+async function deleteRow(rowId, type) {
+  if (!confirm('¿Eliminar esta solicitud? No se puede deshacer.')) return;
+  disableCard(rowId, true);
+  const data = await api({ action: 'deleteRow', rowId, type });
+  if (data && data.ok) {
+    toast('🗑 Solicitud eliminada', 'info');
+    await loadData(true);
+  }
+}
+
+async function addRequest() {
+  const code = document.getElementById('f-code').value.trim();
+  const name = document.getElementById('f-name').value.trim();
+  const detail = document.getElementById('f-detail').value.trim();
+  const status = document.getElementById('f-status').value;
+  if (!code || !name || !detail) { toast('Completa todos los campos.', 'error'); return; }
+
+  document.getElementById('btn-save').disabled = true;
+  document.getElementById('btn-save').textContent = 'Guardando…';
+
+  const data = await api({ action: 'addRow', code, name, detail, status });
+  if (data && data.ok) {
+    toast('✅ Solicitud guardada en Google Sheets', 'success');
+    closeModal();
+    await loadData(true);
+  }
+  document.getElementById('btn-save').disabled = false;
+  document.getElementById('btn-save').textContent = 'Guardar Solicitud';
+}
+
+// ─── RENDER ───────────────────────────────────────────────
+function renderActivas() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const fs = document.getElementById('filter-status').value;
+  const items = activas.filter(r => {
+    const m = r.name.toLowerCase().includes(q) || r.detail.toLowerCase().includes(q) || r.code.toLowerCase().includes(q);
+    return m && (!fs || r.status === fs);
+  });
+
+  const cnt = document.getElementById('cards-activas');
+  cnt.innerHTML = items.length
+    ? items.map(r => cardHTML(r)).join('')
+    : `<div class="empty"><div class="icon">📭</div><p>No hay solicitudes activas.</p></div>`;
+
+  document.getElementById('cnt-p').textContent = activas.filter(r => r.status === 'Pendiente').length;
+  document.getElementById('cnt-e').textContent = activas.filter(r => r.status === 'En Proceso').length;
+  document.getElementById('cnt-t').textContent = activas.length;
+}
+
+function renderConcluidas() {
+  const q = document.getElementById('search-c').value.toLowerCase();
+  const items = concluidas.filter(r =>
+    r.name.toLowerCase().includes(q) || r.detail.toLowerCase().includes(q) || r.code.toLowerCase().includes(q)
+  );
+  const cnt = document.getElementById('cards-concluidas');
+  cnt.innerHTML = items.length
+    ? items.map(r => cardConcHTML(r)).join('')
+    : `<div class="empty"><div class="icon">✅</div><p>No hay solicitudes concluidas.</p></div>`;
+}
+
+function cardHTML(r) {
+  const sc = 's-' + r.status.replace(' ','');
+  return `<div class="card" id="card-${r.rowId}">
+    <div class="card-id">#${String(r.rowId).padStart(3,'0')}</div>
+    <div class="card-body">
+      <div class="card-top">
+        <span class="client-code">${esc(r.code)}</span>
+        <span class="client-name">${esc(r.name)}</span>
+        <span class="status-badge ${sc}">${statusIcon(r.status)} ${r.status}</span>
+      </div>
+      <div class="detail">${esc(r.detail)}</div>
+      <div class="card-meta">📅 Ingreso: ${r.date}</div>
+    </div>
+    <div class="card-actions">
+      <select class="status-select" onchange="changeStatus(${r.rowId}, this.value)">
+        <option ${r.status==='Pendiente'?'selected':''} value="Pendiente">⏳ Pendiente</option>
+        <option ${r.status==='En Proceso'?'selected':''} value="En Proceso">🔄 En Proceso</option>
+        <option value="Concluido">✅ Marcar Concluido</option>
+      </select>
+      <button class="btn btn-danger btn-sm" onclick="deleteRow(${r.rowId},'activa')">🗑 Eliminar</button>
+    </div>
+  </div>`;
+}
+
+function cardConcHTML(r) {
+  return `<div class="card" id="card-${r.rowId}">
+    <div class="card-id">#${String(r.rowId).padStart(3,'0')}</div>
+    <div class="card-body">
+      <div class="card-top">
+        <span class="client-code">${esc(r.code)}</span>
+        <span class="client-name">${esc(r.name)}</span>
+        <span class="status-badge s-Concluido">✅ Concluido</span>
+      </div>
+      <div class="detail">${esc(r.detail)}</div>
+      <div class="card-meta">📅 Ingreso: ${r.date} &nbsp;|&nbsp; ✅ Concluido: ${r.closedDate||'—'}</div>
+    </div>
+    <div class="card-actions">
+      <button class="btn btn-danger btn-sm" onclick="deleteRow(${r.rowId},'concluida')">🗑 Eliminar</button>
+    </div>
+  </div>`;
+}
+
+// ─── UTILS ────────────────────────────────────────────────
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function statusIcon(s) { return s==='Pendiente'?'⏳':s==='En Proceso'?'🔄':'✅'; }
+
+function setLoading(on) {
+  if (on) document.getElementById('cards-activas').innerHTML = '<div class="loading-row"><div class="spinner"></div><p>Cargando desde Google Sheets…</p></div>';
+}
+
+function disableCard(rowId, on) {
+  const card = document.getElementById('card-'+rowId);
+  if (!card) return;
+  card.querySelectorAll('select,button').forEach(el => el.disabled = on);
+}
+
+function updateBadges() {
+  document.getElementById('badge-activas').textContent = activas.length;
+  document.getElementById('badge-concluidas').textContent = concluidas.length;
+}
+
+function switchTab(tab) {
+  document.getElementById('tab-activas').style.display = tab==='activas' ? '' : 'none';
+  document.getElementById('tab-concluidas').style.display = tab==='concluidas' ? '' : 'none';
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='activas')||(i===1&&tab==='concluidas')));
+}
+
+function openModal() {
+  ['f-code','f-name','f-detail'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('f-status').value='Pendiente';
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('f-code').focus(),100);
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+function closeModalOutside(e) { if(e.target===document.getElementById('modal-overlay')) closeModal(); }
+
+let toastTimer;
+function toast(msg, type='info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ el.className=''; }, 3500);
+}
+
+function setSyncStatus(msg) { document.getElementById('sync-status').textContent = msg; }
+
+function updateClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleString('es-PE',{dateStyle:'short',timeStyle:'short'});
+}
+</script>
+</body>
+</html>

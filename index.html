@@ -16,7 +16,7 @@
     --text: #1A202C; --muted: #718096;
   }
   body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
- 
+
   header {
     background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
     color: white; padding: 0 2rem; height: 64px;
@@ -27,7 +27,7 @@
   .header-right { display: flex; align-items: center; gap: 1rem; }
   #sync-status { font-size: 0.78rem; opacity: 0.85; }
   #clock { font-size: 0.78rem; opacity: 0.7; }
- 
+
   /* Config banner */
   #config-banner {
     background: #FEF3C7; border-bottom: 2px solid #F59E0B;
@@ -41,7 +41,7 @@
   }
   .btn-config { padding: 0.5rem 1rem; background: #D97706; color: white; border: none; border-radius: 7px; font-weight: 600; cursor: pointer; font-family: inherit; font-size: 0.85rem; }
   .btn-config:hover { background: #B45309; }
- 
+
   .tabs { display: flex; padding: 1.5rem 2rem 0; border-bottom: 2px solid var(--border); }
   .tab-btn {
     padding: 0.6rem 1.4rem; border: none; background: none;
@@ -58,9 +58,9 @@
     padding: 0 5px; margin-left: 6px;
   }
   .tab-btn:not(.active) .badge { background: #CBD5E0; }
- 
+
   .container { max-width: 1100px; margin: 0 auto; padding: 1.5rem 2rem 3rem; }
- 
+
   .stats { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
   .stat {
     background: white; border: 1.5px solid var(--border);
@@ -71,7 +71,7 @@
   .stat .lbl { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
   .stat.s-p .num { color: var(--pending); }
   .stat.s-e .num { color: var(--process); }
- 
+
   .toolbar {
     display: flex; gap: 1rem; margin-bottom: 1.5rem;
     flex-wrap: wrap; align-items: center; justify-content: space-between;
@@ -84,7 +84,7 @@
   }
   .search-box input:focus { border-color: var(--accent); }
   .search-icon { position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); color: var(--muted); }
- 
+
   .btn {
     padding: 0.55rem 1.1rem; border-radius: 8px; border: none;
     font-size: 0.88rem; font-weight: 600; cursor: pointer;
@@ -101,7 +101,7 @@
   .btn-sm { padding: 0.35rem 0.7rem; font-size: 0.78rem; }
   .btn-refresh { background: #EBF8FF; color: #2B6CB0; border: 1.5px solid #BEE3F8; }
   .btn-refresh:hover { background: #BEE3F8; }
- 
+
   .cards { display: flex; flex-direction: column; gap: 0.9rem; }
   .card {
     background: var(--surface); border: 1.5px solid var(--border);
@@ -132,7 +132,7 @@
     font-size: 0.82rem; font-family: inherit; cursor: pointer; background: white; outline: none;
   }
   .status-select:disabled { opacity: 0.5; cursor: not-allowed; }
- 
+
   .loading-row {
     text-align: center; padding: 2.5rem 1rem; color: var(--muted);
   }
@@ -142,10 +142,10 @@
     animation: spin 0.7s linear infinite; margin: 0 auto 0.8rem;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
- 
+
   .empty { text-align: center; padding: 3rem 1rem; color: var(--muted); }
   .empty .icon { font-size: 2.5rem; margin-bottom: 0.7rem; }
- 
+
   /* Toast */
   #toast {
     position: fixed; bottom: 1.5rem; right: 1.5rem;
@@ -158,7 +158,7 @@
   #toast.success { border-left: 4px solid #16A34A; }
   #toast.error { border-left: 4px solid #DC2626; }
   #toast.info { border-left: 4px solid var(--accent); }
- 
+
   /* Modal */
   .overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.4);
@@ -186,7 +186,7 @@
 </style>
 </head>
 <body>
- 
+
 <header>
   <h1>📋 Gestión de Solicitudes</h1>
   <div class="header-right">
@@ -194,14 +194,14 @@
     <span id="clock"></span>
   </div>
 </header>
- 
+
 <!-- Banner de configuración -->
 <div id="config-banner">
   <p>⚙️ <strong>Paso 1:</strong> Pega aquí la URL de tu Google Apps Script y guárdala:</p>
   <input type="text" id="script-url-input" placeholder="https://script.google.com/macros/s/TU_ID_AQUI/exec">
   <button class="btn-config" onclick="saveScriptUrl()">Guardar URL</button>
 </div>
- 
+
 <div class="tabs">
   <button class="tab-btn active" onclick="switchTab('activas')">
     Solicitudes Activas <span class="badge" id="badge-activas">0</span>
@@ -210,7 +210,7 @@
     Solicitudes Concluidas <span class="badge" id="badge-concluidas">0</span>
   </button>
 </div>
- 
+
 <div class="container">
   <div id="tab-activas">
     <div class="stats">
@@ -233,7 +233,7 @@
     </div>
     <div class="cards" id="cards-activas"><div class="loading-row"><div class="spinner"></div><p>Cargando solicitudes…</p></div></div>
   </div>
- 
+
   <div id="tab-concluidas" style="display:none">
     <div class="toolbar">
       <div class="search-box">
@@ -245,7 +245,7 @@
     <div class="cards" id="cards-concluidas"></div>
   </div>
 </div>
- 
+
 <!-- Modal nueva solicitud -->
 <div class="overlay" id="modal-overlay" onclick="closeModalOutside(event)">
   <div class="modal">
@@ -266,17 +266,17 @@
     </div>
   </div>
 </div>
- 
+
 <div id="toast"></div>
- 
+
 <script>
 // ─── CONFIG ───────────────────────────────────────────────
 const SCRIPT_URL_KEY = 'gestion_script_url';
 let SCRIPT_URL = localStorage.getItem(SCRIPT_URL_KEY) || '';
- 
+
 let activas = [];
 let concluidas = [];
- 
+
 // ─── INIT ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   if (SCRIPT_URL) {
@@ -288,7 +288,7 @@ window.addEventListener('DOMContentLoaded', () => {
   setInterval(updateClock, 1000);
   setInterval(() => { if (SCRIPT_URL) loadData(true); }, 30000); // auto-refresh 30s
 });
- 
+
 function saveScriptUrl() {
   const url = document.getElementById('script-url-input').value.trim();
   if (!url.startsWith('https://script.google.com')) {
@@ -301,7 +301,7 @@ function saveScriptUrl() {
   toast('URL guardada. Cargando datos…', 'success');
   loadData();
 }
- 
+
 // ─── API CALLS ────────────────────────────────────────────
 async function api(params) {
   if (!SCRIPT_URL) { toast('Configura la URL del script primero.', 'error'); return null; }
@@ -318,7 +318,7 @@ async function api(params) {
     return null;
   }
 }
- 
+
 async function loadData(silent = false) {
   if (!SCRIPT_URL) return;
   if (!silent) setLoading(true);
@@ -331,7 +331,7 @@ async function loadData(silent = false) {
   updateBadges();
   if (!silent) setLoading(false);
 }
- 
+
 async function changeStatus(rowId, newStatus) {
   disableCard(rowId, true);
   const data = await api({ action: 'updateStatus', rowId, newStatus });
@@ -341,7 +341,7 @@ async function changeStatus(rowId, newStatus) {
   }
   disableCard(rowId, false);
 }
- 
+
 async function deleteRow(rowId, type) {
   if (!confirm('¿Eliminar esta solicitud? No se puede deshacer.')) return;
   disableCard(rowId, true);
@@ -351,17 +351,17 @@ async function deleteRow(rowId, type) {
     await loadData(true);
   }
 }
- 
+
 async function addRequest() {
   const code = document.getElementById('f-code').value.trim();
   const name = document.getElementById('f-name').value.trim();
   const detail = document.getElementById('f-detail').value.trim();
   const status = document.getElementById('f-status').value;
   if (!code || !name || !detail) { toast('Completa todos los campos.', 'error'); return; }
- 
+
   document.getElementById('btn-save').disabled = true;
   document.getElementById('btn-save').textContent = 'Guardando…';
- 
+
   const data = await api({ action: 'addRow', code, name, detail, status });
   if (data && data.ok) {
     toast('✅ Solicitud guardada en Google Sheets', 'success');
@@ -371,7 +371,7 @@ async function addRequest() {
   document.getElementById('btn-save').disabled = false;
   document.getElementById('btn-save').textContent = 'Guardar Solicitud';
 }
- 
+
 // ─── RENDER ───────────────────────────────────────────────
 function renderActivas() {
   const q = document.getElementById('search').value.toLowerCase();
@@ -380,17 +380,17 @@ function renderActivas() {
     const m = r.name.toLowerCase().includes(q) || r.detail.toLowerCase().includes(q) || r.code.toLowerCase().includes(q);
     return m && (!fs || r.status === fs);
   });
- 
+
   const cnt = document.getElementById('cards-activas');
   cnt.innerHTML = items.length
     ? items.map(r => cardHTML(r)).join('')
     : `<div class="empty"><div class="icon">📭</div><p>No hay solicitudes activas.</p></div>`;
- 
+
   document.getElementById('cnt-p').textContent = activas.filter(r => r.status === 'Pendiente').length;
   document.getElementById('cnt-e').textContent = activas.filter(r => r.status === 'En Proceso').length;
   document.getElementById('cnt-t').textContent = activas.length;
 }
- 
+
 function renderConcluidas() {
   const q = document.getElementById('search-c').value.toLowerCase();
   const items = concluidas.filter(r =>
@@ -401,7 +401,7 @@ function renderConcluidas() {
     ? items.map(r => cardConcHTML(r)).join('')
     : `<div class="empty"><div class="icon">✅</div><p>No hay solicitudes concluidas.</p></div>`;
 }
- 
+
 function cardHTML(r) {
   const sc = 's-' + r.status.replace(' ','');
   return `<div class="card" id="card-${r.rowId}">
@@ -425,7 +425,7 @@ function cardHTML(r) {
     </div>
   </div>`;
 }
- 
+
 function cardConcHTML(r) {
   return `<div class="card" id="card-${r.rowId}">
     <div class="card-id">#${String(r.rowId).padStart(3,'0')}</div>
@@ -443,32 +443,32 @@ function cardConcHTML(r) {
     </div>
   </div>`;
 }
- 
+
 // ─── UTILS ────────────────────────────────────────────────
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function statusIcon(s) { return s==='Pendiente'?'⏳':s==='En Proceso'?'🔄':'✅'; }
- 
+
 function setLoading(on) {
   if (on) document.getElementById('cards-activas').innerHTML = '<div class="loading-row"><div class="spinner"></div><p>Cargando desde Google Sheets…</p></div>';
 }
- 
+
 function disableCard(rowId, on) {
   const card = document.getElementById('card-'+rowId);
   if (!card) return;
   card.querySelectorAll('select,button').forEach(el => el.disabled = on);
 }
- 
+
 function updateBadges() {
   document.getElementById('badge-activas').textContent = activas.length;
   document.getElementById('badge-concluidas').textContent = concluidas.length;
 }
- 
+
 function switchTab(tab) {
   document.getElementById('tab-activas').style.display = tab==='activas' ? '' : 'none';
   document.getElementById('tab-concluidas').style.display = tab==='concluidas' ? '' : 'none';
   document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='activas')||(i===1&&tab==='concluidas')));
 }
- 
+
 function openModal() {
   ['f-code','f-name','f-detail'].forEach(id => document.getElementById(id).value='');
   document.getElementById('f-status').value='Pendiente';
@@ -477,7 +477,7 @@ function openModal() {
 }
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 function closeModalOutside(e) { if(e.target===document.getElementById('modal-overlay')) closeModal(); }
- 
+
 let toastTimer;
 function toast(msg, type='info') {
   const el = document.getElementById('toast');
@@ -485,13 +485,12 @@ function toast(msg, type='info') {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>{ el.className=''; }, 3500);
 }
- 
+
 function setSyncStatus(msg) { document.getElementById('sync-status').textContent = msg; }
- 
+
 function updateClock() {
   document.getElementById('clock').textContent = new Date().toLocaleString('es-PE',{timeZone:'America/Lima',dateStyle:'short',timeStyle:'short'});
 }
 </script>
 </body>
 </html>
- 
